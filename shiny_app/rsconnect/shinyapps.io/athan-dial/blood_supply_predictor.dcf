@@ -1,0 +1,12 @@
+name: blood_supply_predictor
+title: blood_supply_predictor
+username:
+account: athan-dial
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3594799
+bundleId: 4190261
+url: https://athan-dial.shinyapps.io/blood_supply_predictor/
+when: 1612656599.58774
+asMultiple: FALSE
+asStatic: FALSE

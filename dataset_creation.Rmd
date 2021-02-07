@@ -1,0 +1,97 @@
+---
+title: "bloodbank_dataset_creation"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+```{r}
+
+## Create a donor information database ##
+donor <- 
+  data.frame(
+  donor_id = sample(1:1000, 1000, replace = F),
+  donor_dob = sample(seq(as.Date('1941/01/01'), as.Date('2004/02/06'), by="day"), 1000),
+  donor_gender = sample(c("M", "F"), 1000, replace = T, prob = c(0.5, 0.5)),
+  donor_bloodtype = 
+    sample(
+      c("a_pos", "a_neg", "b_pos", "b_neg", "o_pos", "o_neg", "ab_pos", "ab_neg"), 1000, 
+      replace = T, c(0.36, 0.06, 0.076, 0.014, 0.07, 0.39, 0.005, 0.025)),
+  donor_weight_kg = sample(49:113, replace = T, 1000),
+  donor_height_cm = sample(164:178, replace = T, 1000)
+  )
+
+## Create a donation information database ##
+donation <-
+  data.frame(
+    donor_id = sample(donor$donor_id, replace = T, 10000), # subject indentifiers
+    donation_date = sample(seq(as.Date('2021/01/01'), as.Date('2021/12/31'), by="day"), replace = T, 10000), # dates from 2021
+    donation_unit = 1, # every row counts as one donation
+    donation_volume_ml = sample(450:550, replace = T, 10000), # average donation volumes are between 450 and 550 mL
+    donation_type = sample(c("cryo", "plasma", "platelet", "RBC"), 10000, replace = T, prob = c(0.1, 0.25, 0.15, 0.5)) # blood donation types
+    ) %>% 
+    mutate( # each type of donation will have a unique shelf life
+      donation_shelf_life_days =  
+        ifelse(donation_type == "platelet", 7,
+        ifelse(donation_type == "RBC", 42,365)),
+      donation_expiry = as.Date(donation_date + donation_shelf_life_days),
+      month = month(donation_date)
+    )
+
+
+props <- c(1, 0.85, 0.75, 0.60, 0.50, 0.45, 0.4, 0.5, 0.55, 0.6, 0.75, 0.80) # multipliers to represent the different likelihood of blood donations during different times of the year
+
+## The following lines multiply the database by the likelihoods in order to reflect the seasonality of the the blood donations
+donation_list <- 
+  donation %>%
+  group_split(month) 
+
+res <- lapply(seq_along(props), function(x) sample_frac(donation_list[[x]], props[x]))    
+res <- do.call("rbind", res)
+res <- 
+  res %>% 
+  left_join(donor %>% select(donor_id, donor_bloodtype), by = "donor_id") %>% 
+  mutate(donor_bloodtype = recode(donor_bloodtype,
+          "a_neg" = "A-",
+          "a_pos" = 'A+',
+          'b_neg' = 'B-',
+          'b_pos' = 'B+',
+          'ab_neg' = 'AB-',
+          'ab_pos' = 'AB+',
+          'o_neg' = 'O-',
+          'o_pos' = 'O+'
+          )
+         )
+
+## Save to file for use in the shiny app
+saveRDS(res, "shiny_app/data/dataset.rds")
+
+res
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
