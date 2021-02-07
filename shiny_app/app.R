@@ -21,7 +21,7 @@ ui <- fluidPage(
     # Main panel for displaying outputs ----
     mainPanel(
       
-      h1("Blood units available (by type)"),
+      h1("Blood units required (predicted)"),
       # Create a new row for the table.
       DT::dataTableOutput("table"),
       plotOutput("daily_plot")
@@ -51,7 +51,7 @@ server <- function(input, output) {
       filter(donation_expiry > input$date & donation_date <= input$date) %>% 
       group_by(donor_bloodtype) %>% 
       summarise(available_units = n()) %>% 
-      rename("Blood type" = "donor_bloodtype", "Available Units" = "available_units")
+      rename("Blood type" = "donor_bloodtype", "Required Units" = "available_units")
 
   },options = list(dom = 't'), rownames = FALSE))
   
@@ -63,7 +63,7 @@ server <- function(input, output) {
       ggplot(aes(x = xlab, y = n))+
       geom_col(aes(fill = donor_bloodtype), position = position_fill())+
       scale_fill_viridis_d()+
-      labs(fill = "Type", x = "", y = "Units available by type (%)")+
+      labs(fill = "Type", x = "", y = "Units required by type (%)")+
       theme_minimal()+
       coord_flip()+
       theme(
